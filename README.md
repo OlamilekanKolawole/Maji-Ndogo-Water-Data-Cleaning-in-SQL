@@ -11,9 +11,9 @@
 
 - [Data Cleaning and Preparation](#data-cleaning-and-preparation)
 
-- [Exploratory Data Analysis](exploratory-data-analysis)
+- [Exploratory Data Analysis](#exploratory-data-analysis)
 
-- [Data Analysis](data-analysis)
+- [Data Analysis](#data-analysis)
 
 - [Result and Findings](#result-and-findings)
 
