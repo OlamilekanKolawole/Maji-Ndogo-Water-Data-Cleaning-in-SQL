@@ -96,7 +96,7 @@ SELECT * FROM water_quality WHERE visit_count >='2' AND subjective_quality_score
 ```
 -  Correct the phone number for the employee named'Bello Azibo'. The correct number is +99643864786.
 
-  # Data Analysis
+  ### Data Analysis
 
   ### Beginning Our Data-Driven Journey in Maji Ndogo (Level 1)
 
