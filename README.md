@@ -26,6 +26,9 @@
 ### Project Overview 
 This Data Analysis Project aims to provide meaningful insights to Maji Ndogwo Water Crisis, By analysing and exploring Database structure,We seek to identify trends, make data driven recommendations  and gain a deeper understanding of Maji Ndogo Water Crisis.
 
+![Sokoto river](https://github.com/OlamilekanKolawole/Maji-Ndogo-Water-Data-Cleaning-in-SQL/assets/151407380/15955b1a-b35e-47a6-871c-cf2b449199ed)
+
+
 ### Data Sources 
 Maji Ndogo water services: The primary Dataset used for this analysis is the "md_water_services.SQL" Text File, containing detailed information about Maji Ndogo Water issues.
 
