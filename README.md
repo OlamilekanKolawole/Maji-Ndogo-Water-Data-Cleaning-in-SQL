@@ -279,8 +279,7 @@ biological > 0.01 AND results = 'Clean';
 
 ## Clustering data to unveil Maji Ndogo's water  (Level 2)
 
-### Looking at the employee Data we nothing the Email was not given However,We will have to send
-them reports and figures, so let's update it
+### Looking at the employee Data we nothing the Email was not given However,We will have to send them reports and figures, so let's update it
 
 #### First up, let's remove the space between the first and last names using REPLACE(). 
 ```sql
@@ -308,7 +307,7 @@ FROM
 ```
 
 
-Now we can UPDATE IT
+####  Now we can UPDATE IT
 ```sql
 SET SQL_SAFE_UPDATES = 0;    
 UPDATE employee 
@@ -317,8 +316,7 @@ SET
             '@ndogowater.gov');
 ```
 
-The phone numbers should be 12 characters long, consisting of the plus sign, area code (99), and the phone number digits. However, when we use
-the LENGTH(column) function, it returns 13 characters, indicating there's an extra character.
+####  The phone numbers should be 12 characters long, consisting of the plus sign, area code (99), and the phone number digits. However, when we use the LENGTH(column) function, it returns 13 characters, indicating there's an extra character.
 
 ```sql
 SELECT 
@@ -328,10 +326,9 @@ FROM
 ```
 
 
-That's because there is a space at the end of the number! If you try to send an automated SMS to that number it will fail. This happens so often
-that they create a function
+#### That's because there is a space at the end of the number! If you try to send an automated SMS to that number it will fail. This happens so often that they create a function
 
-Now to remove any leading or trailing spaces from a string, we use 
+####  Now to remove any leading or trailing spaces from a string, we use 
 
 ```sql
 SELECT 
@@ -340,7 +337,7 @@ FROM
     employee;
 ```
 
-After Trimming we confirmed to see if the digits are 12 now before updating ,Lets check
+####  After Trimming we confirmed to see if the digits are 12 now before updating ,Lets check
 
 ```sql
     SELECT 
@@ -358,7 +355,7 @@ SET
 
 
 
-Use the employee table to count how many of our employees live in each town
+####  Use the employee table to count how many of our employees live in each town
 
 ```sql
 SELECT 
@@ -369,8 +366,7 @@ GROUP BY town_name;
 ```
 
 
-Pres. Naledi has asked we send out an email or message congratulating the top 3 field surveyors. So let's use the database to get the
-employee_ids and use those to get the names, email and phone numbers of the three field surveyors with the most location visits
+####  Pres. Naledi has asked we send out an email or message congratulating the top 3 field surveyors. So let's use the database to get the employee_ids and use those to get the names, email and phone numbers of the three field surveyors with the most location visits
 
 ```sql
 SELECT 
@@ -383,7 +379,7 @@ ORDER BY Number_of_visits DESC
 LIMIT 3;
 ```
 
-Now we need there info so tHE PRESIDENT can reach out to them
+####  Now we need there info so tHE PRESIDENT can reach out to them
 
 ```sql
 SELECT 
@@ -395,7 +391,7 @@ WHERE
 ```
 
 
-Create a query that counts the number of records per town
+####  Create a query that counts the number of records per town
 
 ```sql
 SELECT 
@@ -406,7 +402,7 @@ GROUP BY town_name;
 ```
 
 
-OR
+####  OR
 
 ```sql
 SELECT 
@@ -417,7 +413,7 @@ GROUP BY town_name;
 ```
 
 
-Now count the records per province.
+####  Now count the records per province.
 
 ```sql
 SELECT 
@@ -429,11 +425,11 @@ GROUP BY province_name;
 
 
 
-1. Create a result set showing:
-• province_name
-• town_name
-• An aggregated count of records for each town (consider naming this records_per_town).
-• Ensure your data is grouped by both province_name and town_name.
+####  1. Create a result set showing:
+- province_name
+- town_name
+- An aggregated count of records for each town (consider naming this records_per_town).
+- Ensure your data is grouped by both province_name and town_name.
 2. Order your results primarily by province_name. Within each province, further sort the towns by their record counts in descending order.
 
 ```sql
@@ -449,7 +445,7 @@ ORDER BY province_name DESC ;
 
 
 
-Finally, look at the number of records for each location type
+#### Finally, look at the number of records for each location type
 
 ```sql
 SELECT 
@@ -471,9 +467,9 @@ SELECT 23740 / (15910 + 23740) * 100
 
 ## WATER SOURCE TABLE 
 
-The way I look at this table; we have access to different water source types and the number of people using each source.
-These are the questions that I am curious about.
-1. How many people did we survey in total?
+#### The way I look at this table; we have access to different water source types and the number of people using each source.
+#### These are the questions that I am curious about.
+#### 1. How many people did we survey in total?
 ```sql
 SELECT 
     type_of_water_source,
@@ -485,7 +481,7 @@ ORDER BY Total_People_served DESC;
 ```
 
 
-2. How many wells, taps and rivers are there?
+#### 2. How many wells, taps and rivers are there?
 ```sql
 SELECT 
     type_of_water_source,
@@ -497,7 +493,7 @@ ORDER BY number_of_sources;
 ```
 
 
-3. How many people share particular types of water sources on average?
+#### 3. How many people share particular types of water sources on average?
 ```sql
 SELECT 
     type_of_water_source,
@@ -510,7 +506,7 @@ ORDER BY Avg_number_of_people_served;
 
 
 
-4. How many people are getting water from each type of source?
+#### 4. How many people are getting water from each type of source?
 ```sql
 SELECT 
     type_of_water_source,
@@ -521,22 +517,16 @@ GROUP BY type_of_water_source
 ORDER BY Total_people_served DESC;
 ```
 
-These results are telling us that 644 people share a tap_in_home on average. Does that make sense?
+#### These results are telling us that 644 people share a tap_in_home on average. Does that make sense?
+#### No it doesn’t, right?
+#### Remember I told you a few important things that apply to tap_in_home and broken_tap_in_home? The surveyors combined the data of many households together and added this as a single tap record, but each household actually has its own tap. In addition to this, there is an average of 6 people living in a home. So 6 people actually share 1 tap (not 644)
 
 
-No it doesn’t, right?
-Remember I told you a few important things that apply to tap_in_home and broken_tap_in_home? The surveyors combined the data of many
-households together and added this as a single tap record, but each household actually has its own tap. In addition to this, there is an average of
-6 people living in a home. So 6 people actually share 1 tap (not 644)
-
-
-This means that 1 tap_in_home actually represents 644 ÷ 6 = ± 100 taps
+#### This means that 1 tap_in_home actually represents 644 ÷ 6 = ± 100 taps
 
 
 
-It's a little hard to comprehend these numbers, but you can see that one of these is dominating. To make it a bit simpler to interpret, let's use
-percentages. First, we need the total number of citizens then use the result of that and divide each of the SUM(number_of_people_served) by
-that number, times 100, to get percentages.
+#### It's a little hard to comprehend these numbers, but you can see that one of these is dominating. To make it a bit simpler to interpret, let's use percentages. First, we need the total number of citizens then use the result of that and divide each of the SUM(number_of_people_served) by that number, times 100, to get percentages.
 
 ```sql
 SELECT 
@@ -553,23 +543,20 @@ GROUP BY type_of_water_source
 ORDER BY Total_people_served DESC;
 ```
 
-By adding tap_in_home and tap_in_home_broken together, we see that 31% of people have water infrastructure installed in their homes, but 45%
-(14/31) of these taps are not working! This isn't the tap itself that is broken, but rather the infrastructure like treatment plants, reservoirs, pipes, and
-pumps that serve these homes that are broken.
-18% of people are using wells. But only 4916 out of 17383 are clean = 28% (from last week).
+#### By adding tap_in_home and tap_in_home_broken together, we see that 31% of people have water infrastructure installed in their homes, but 45% (14/31) of these taps are not working! This isn't the tap itself that is broken, but rather the infrastructure like treatment plants, reservoirs, pipes, and pumps that serve these homes that are broken. 18% of people are using wells. But only 4916 out of 17383 are clean = 28% (from last week).
 
 
 
 
 
-Start of a solution
+### Start of a solution
 
-At some point, we will have to fix or improve all of the infrastructure, so we should start thinking about how we can make a data-driven decision
+#### At some point, we will have to fix or improve all of the infrastructure, so we should start thinking about how we can make a data-driven decision
 how to do it. I think a simple approach is to fix the things that affect most people first. So let's write a query that ranks each type of source based
 on how many people in total use it. RANK() should tell you we are going to need a window function to do this, so let's think through the problem.
 
 
-We will need the following columns:
+#### We will need the following columns:
 - Type of sources -- Easy
 - Total people served grouped by the types -- We did that earlier, so that's easy too.
 - A rank based on the total people served, grouped by the types -- A little harder.
@@ -584,16 +571,15 @@ GROUP BY type_of_water_source) AS Subquery ORDER BY Total_people_served DESC;
 
 
 
-Ok, so we should fix shared taps first, then wells, and so on. But the next question is, which shared taps or wells should be fixed first? We can use
-the same logic; the most used sources should really be fixed first.
+#### Ok, so we should fix shared taps first, then wells, and so on. But the next question is, which shared taps or wells should be fixed first? We can use the same logic; the most used sources should really be fixed first.
 
-So create a query to do this, and keep these requirements in mind:
-1. The sources within each type should be assigned a rank.
-2. Limit the results to only improvable sources.
-3. Think about how to partition, filter and order the results set.
-4. Order the results to see the top of the list.
+#### So create a query to do this, and keep these requirements in mind:
+#### 1. The sources within each type should be assigned a rank.
+#### 2. Limit the results to only improvable sources.
+#### 3. Think about how to partition, filter and order the results set.
+#### 4. Order the results to see the top of the list.
 
-USING RANK()
+### USING RANK()
 
 ```sql
 SELECT 
@@ -607,7 +593,7 @@ group by source_id, type_of_water_source;
 ```
 
 
-USING DENSE RANK 
+### USING DENSE RANK 
 
 ```sql
 SELECT 
@@ -621,7 +607,7 @@ group by source_id, type_of_water_source;
 ```
 
 
-USING ROW NUMBER 
+### USING ROW NUMBER 
 
 ```sql
 SELECT 
@@ -638,26 +624,27 @@ group by source_id, type_of_water_source;
 
 
 
-Analysing queues
+## Analysing queues
 
-Ok, these are some of the things I think are worth looking at:
-1. How long did the survey take?
+### Ok, these are some of the things I think are worth looking at:
+#### 1. How long did the survey take?
 
 ```sql
 SELECT 
     DATEDIFF(MAX(time_of_record), MIN(time_of_record)) AS Survey_Duration_in_Days
 FROM
     visits;
+```
 
-2. What is the average total queue time for water?
-
+#### 2. What is the average total queue time for water?
+```sql
 SELECT 
     AVG(time_in_queue) AS Average_Time_in_Queue
 FROM
     visits;
 ```
 
-3. What is the average queue time on different days?
+#### 3. What is the average queue time on different days?
 
 ```sql
 SELECT 
@@ -670,7 +657,7 @@ ORDER BY Average_Queue_Time DESC;
 ```
 
 
-4. Which day of the week has the most visits?
+#### 4. Which day of the week has the most visits?
 
 ```sql
 SELECT 
@@ -683,7 +670,7 @@ ORDER BY Visits_Count DESC
 LIMIT 1;
 ```
 
-OR  
+#### OR  
 
 ```sql
 SELECT 
@@ -697,7 +684,7 @@ LIMIT 1;
 ```
 
 
-5.What is the overall trend in the number of visits over time ?
+#### 5.What is the overall trend in the number of visits over time ?
 
 ```sql
 SELECT 
@@ -710,7 +697,7 @@ ORDER BY Visit_Date;
 ```
 
 
-6.  How long people have to queue on average in Maji Ndogo
+#### 6.  How long people have to queue on average in Maji Ndogo
 The ones who have tap at home where not included here and were recorded as zero on the time_in_queue
 
 ```sql
@@ -720,7 +707,7 @@ FROM
     visits;
 ```
 
-7. The queue times aggregated across the different days of the week.
+#### 7. The queue times aggregated across the different days of the week.
 
 ```sql
 SELECT 
@@ -741,7 +728,7 @@ END;
 ```
     
 
-8. Time during the day people collect water
+#### 8. Time during the day people collect water
 
 ```sql
 SELECT 
@@ -782,8 +769,9 @@ WHERE
 ```
 
 
-Making a Pivot Table on SQL 
-9. To aggregate by the hour, we can group the data by hour_of_day, and to make the table chronological, we can also order by hour_of_day. (For each day)
+### Making a Pivot Table on SQL 
+
+#### 9. To aggregate by the hour, we can group the data by hour_of_day, and to make the table chronological, we can also order by hour_of_day. (For each day)
 
 ```sql
 SELECT 
@@ -837,14 +825,67 @@ See if you can spot these patterns:
 3. People have to queue pretty much twice as long on Saturdays compared to the weekdays. It looks like people spend their Saturdays queueing
 for water, perhaps for the week's supply?
 4. The shortest queues are on Sundays, and this is a cultural thing. The people of Maji Ndogo prioritise family and religion, so Sundays are spent
-with family and friends
-
-10. 
-11.
-12.
-13.
+with family and friends.
 
 
+#### 10. Query for average of Sat, Sun, Tuesday
+    
+```sql
+SELECT
+CASE
+WHEN DAYNAME(time_of_record) = 'Saturday' AND HOUR(time_of_record) = 12 THEN
+'Saturday 12:00-13:00'
+WHEN DAYNAME(time_of_record) = 'Tuesday' AND HOUR(time_of_record) = 18 THEN
+'Tuesday 18:00-19:00'
+WHEN DAYNAME(time_of_record) = 'Sunday' AND HOUR(time_of_record) = 9 THEN
+'Sunday 09:00-10:00'
+END AS Time_Period,
+ROUND(AVG(time_in_queue), 0) AS Average_Queue_Time
+FROM
+visits
+WHERE
+(DAYNAME(time_of_record) = 'Saturday' AND HOUR(time_of_record) = 12) OR
+(DAYNAME(time_of_record) = 'Tuesday' AND HOUR(time_of_record) = 18) OR
+(DAYNAME(time_of_record) = 'Sunday' AND HOUR(time_of_record) = 9)
+GROUP BY
+Time_Period;
+```
+
+
+#### 11.Query to find out how many employees live in Dahabu (Use this for Kilimani and Harare,
+change as needed)
+```sql
+SELECT COUNT(*) AS number_of_employees
+FROM employee
+WHERE town_name = 'Dahabu';
+```
+
+#### 12. Query for worst performing employees:
+```sql
+SELECT 
+    assigned_employee_id AS Employee_ID,
+    COUNT(visit_count) AS Number_of_Visits
+FROM
+    visits
+GROUP BY assigned_employee_id
+ORDER BY Number_of_Visits ASC
+LIMIT 3;
+```
+
+
+
+
+#### 13. Query find out how many sites the two worst-performing employees (Employee IDs 20 and 22) visited
+```sql
+SELECT 
+    assigned_employee_id AS Employee_ID,
+    COUNT(visit_count) AS Number_of_Visits
+FROM
+    visits
+WHERE
+    assigned_employee_id IN (20 , 22)
+GROUP BY Assigned_employee_id;
+```
 
 
 Water Accessibility and infrastructure summary report
