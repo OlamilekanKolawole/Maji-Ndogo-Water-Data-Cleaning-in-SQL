@@ -945,25 +945,17 @@ Think these through a bit and in the meantime I'll send out some emails to get e
 
 ## Weaving the data threads of Maji Ndogo's narrative  (Level 3)
 
-
-Weaving the data threads of Maji Ndogo's narrative
-
-
-looking at the relationship between the visits and water_quality tables. For every entry in the visits table, there should be one unique
-corresponding record in the water_quality table. This means each visit recorded is associated with a specific water quality score, ensuring a
-one-to-one relationship between the visits and water_quality tables.
-But if we look at the ERD, it shows a many-to-one relationship. This does not agree with our thinking. Errors like these can cause problems, so let's
-fix that.
+#### looking at the relationship between the visits and water_quality tables. For every entry in the visits table, there should be one unique corresponding record in the water_quality table. This means each visit recorded is associated with a specific water quality score, ensuring a one-to-one relationship between the visits and water_quality tables. But if we look at the ERD, it shows a many-to-one relationship. This does not agree with our thinking. Errors like these can cause problems, so let's fix that by changing it to one-to-one relationship.
 
 
 
-Integrating the Auditor's report
+### Integrating the Auditor's report
 
-A .csv file of the auditor's results. You should get it loaded into SQL. You will have to think back to the start of our journey on how to
-do that
+#### A .csv file of the auditor's results. You should get it loaded into SQL. You will have to think back to the start of our journey on how to do that
 
 
-```sqlDROP TABLE IF EXISTS auditor_report;
+```sql
+DROP TABLE IF EXISTS auditor_report;
 CREATE TABLE auditor_report (
 location_id VARCHAR(32),
 type_of_water_source VARCHAR(64),
@@ -971,25 +963,13 @@ true_water_source_score int DEFAULT NULL,
 statements VARCHAR(255)
 );
 ```
+#### Wow! First off, it looks like we have 1620 records, or sites that they re-visited. I see a location_id, type of water source at that location, and the quality score of the water source, that is now independently measured. Our auditor also investigated each site a bit by speaking to a few locals. Their statements are also captured in his results.
 
+#### We need to tackle a couple of questions here.
+#### 1. Is there a difference in the scores?
+#### 2. If so, are there patterns?
 
-
-
-Wow! First off, it looks like we have 1620 records, or sites that they re-visited. I see a location_id, type of water source at that location, and the
-quality score of the water source, that is now independently measured. Our auditor also investigated each site a bit by speaking to a few locals.
-Their statements are also captured in his results.
-
-We need to tackle a couple of questions here.
-1. Is there a difference in the scores?
-2. If so, are there patterns?
-
-For the first question, we will have to compare the quality scores in the water_quality table to the auditor's scores. The auditor_report table
-used location_id, but the quality scores table only has a record_id we can use. The visits table links location_id and record_id, so we
-can link the auditor_report table and water_quality using the visits table.
-
-So first, grab the location_id and true_water_source_score columns from auditor_report.
-
-Now, we join the visits table to the auditor_report table. Make sure to grab subjective_quality_score, record_id and location_id.
+#### For the first question, we will have to compare the quality scores in the water_quality table to the auditor's scores. The auditor_report table used location_id, but the quality scores table only has a record_id we can use. The visits table links location_id and record_id, so we can link the auditor_report table and water_quality using the visits table. So first, grab the location_id and true_water_source_score columns from auditor_report.Now, we join the visits table to the auditor_report table. Make sure to grab subjective_quality_score, record_id and location_id.
 
 ```sql
 SELECT
@@ -1010,6 +990,7 @@ Now that we have the record_id for each location, our next step is to retrieve t
 are particularly interested in the subjective_quality_score. To do this, we'll JOIN the visits table and the water_quality table, using the
 record_id as the connecting key.
 
+```sql
 SELECT 
     auditor_report.location_id,
     auditor_report.true_water_source_score AS Auditor_Score,
@@ -1021,12 +1002,11 @@ FROM
     visits  ON auditor_report.location_id = visits.location_id
         JOIN
     water_quality  ON visits.record_id = water_quality.record_id
+```
 
+#### OR
 
-OR
-
-
-
+```sql
 SELECT 
     ar.location_id,
     ar.true_water_source_score AS Auditor_Score,
@@ -1038,12 +1018,14 @@ FROM
     visits v ON ar.location_id = v.location_id
         JOIN
     water_quality wq ON v.record_id = wq.record_id;
+```
 
 
 
-Ok, let's analyse! A good starting point is to check if the auditor's and exployees' scores agree. There are many ways to do it. We can have a
-WHERE clause and check if surveyor_score = auditor_score, or we can subtract the two scores and check if the result is 0
+#### Ok, let's analyse! A good starting point is to check if the auditor's and exployees' scores agree. There are many ways to do it. We can have a WHERE clause and check if surveyor_score = auditor_score, or we can subtract the two scores and check if the result is 0
 
+
+```sql
 SELECT 
     ar.location_id,
     ar.true_water_source_score AS Auditor_Score,
@@ -1055,14 +1037,13 @@ FROM
     visits v ON ar.location_id = v.location_id
         JOIN
     water_quality wq ON v.record_id = wq.record_id
-    Where wq.subjective_quality_score = ar.true_water_source_score
+    Where wq.subjective_quality_score = ar.true_water_source_score;
+```
 
 
-Some of the locations were visited multiple times, so these records are duplicated here. To fix it, we set visits.visit_count
-= 1 in the WHERE clause. Make sure you reference the alias you used for visits in the join.
+#### Some of the locations were visited multiple times, so these records are duplicated here. To fix it, we set visits.visit_count = 1 in the WHERE clause. Make sure you reference the alias you used for visits in the join.
 
-
-
+```sql
 SELECT 
     ar.location_id,
     ar.true_water_source_score AS Auditor_Score,
@@ -1076,14 +1057,12 @@ FROM
     water_quality wq ON v.record_id = wq.record_id
 WHERE
     wq.subjective_quality_score = ar.true_water_source_score
-        AND v.visit_count = 1
+        AND v.visit_count = 1;
+```
 
-With the duplicates removed I now get 1518 rows. What does this mean considering the auditor visited 1620 sites?
-I think that is an excellent result as 1518/1620 = 94% of the records the auditor checked were correct!!
-But that means that 102 records are incorrect. So let's look at the incorrect ones  by adding one character in the last query!
-THE ERROR THAT RETURN 102 INCORRECT RECORDS 
+#### With the duplicates removed I now get 1518 rows. What does this mean considering the auditor visited 1620 sites? I think that is an excellent result as 1518/1620 = 94% of the records the auditor checked were correct!! But that means that 102 records are incorrect. So let's look at the incorrect ones  by adding one character in the last query! THE ERROR THAT RETURN 102 INCORRECT RECORDS 
 
-        
+```sql        
 SELECT 
     ar.location_id,
     ar.true_water_source_score AS Auditor_Score,
@@ -1097,18 +1076,15 @@ FROM
     water_quality wq ON v.record_id = wq.record_id
 WHERE
     wq.subjective_quality_score != ar.true_water_source_score    --------INCORRECT RECORD 
-        AND v.visit_count = 1
+        AND v.visit_count = 1;
+```
 
 
-
-Since we used some of this data in our previous analyses, we need to make sure those results are still valid, now we know some of them are
-incorrect. We didn't use the scores that much, but we relied a lot on the type_of_water_source, so let's check if there are any errors there.
-So, to do this, we need to grab the type_of_water_source column from the water_source table and call it survey_source, using the
-source_id column to JOIN. Also select the type_of_water_source from the auditor_report table, and call it auditor_source.
+#### Since we used some of this data in our previous analyses, we need to make sure those results are still valid, now we know some of them are incorrect. We didn't use the scores that much, but we relied a lot on the type_of_water_source, so let's check if there are any errors there. So, to do this, we need to grab the type_of_water_source column from the water_source table and call it survey_source, using the source_id column to JOIN. Also select the type_of_water_source from the auditor_report table, and call it auditor_source.
 
 
     
-   
+```sql     
 SELECT 
     v.record_id AS record_id,
     a.location_id AS location_id,
@@ -1128,14 +1104,12 @@ WHERE
     (a.true_water_source_score = w.subjective_quality_score
         OR v.visit_count = 1)
         AND a.true_water_source_score <> w.subjective_quality_score;
+```
 
 
-we noticed  that the types of sources look the same! So even though the scores are wrong, the integrity of the type_of_water_source
-data we analysed last time is not affected.
+#### we noticed  that the types of sources look the same! So even though the scores are wrong, the integrity of the type_of_water_source data we analysed last time is not affected. Once you're done, remove the columns and JOIN statement for water_sources again
 
-Once you're done, remove the columns and JOIN statement for water_sources again
-
-
+```sql 
 SELECT 
     v.record_id AS record_id,
     a.location_id AS location_id,
@@ -1152,23 +1126,19 @@ WHERE
     (a.true_water_source_score = w.subjective_quality_score
         OR v.visit_count = 1)
         AND a.true_water_source_score <> w.subjective_quality_score;
+```
 
 
-Linking records to employees
-Next up, let's look at where these errors may have come from. At some of the locations, employees assigned scores incorrectly, and those records
-ended up in this results set.
+### Linking records to employees
+#### Next up, let's look at where these errors may have come from. At some of the locations, employees assigned scores incorrectly, and those records ended up in this results set.
 
-I think there are two reasons this can happen.
-1. These workers are all humans and make mistakes so this is expected.
-2. Unfortunately, the alternative is that someone assigned scores incorrectly on purpose!
+#### I think there are two reasons this can happen.
+#### 1. These workers are all humans and make mistakes so this is expected.
+#### 2. Unfortunately, the alternative is that someone assigned scores incorrectly on purpose!
 
-In either case, the employees are the source of the errors, so let's JOIN the assigned_employee_id for all the people on our list from the visits
-table to our query. Remember, our query shows the shows the 102 incorrect records, so when we join the employee data, we can see which
-employees made these incorrect records.
+#### In either case, the employees are the source of the errors, so let's JOIN the assigned_employee_id for all the people on our list from the visits table to our query. Remember, our query shows the shows the 102 incorrect records, so when we join the employee data, we can see which employees made these incorrect records.
 
-
-
-
+```sql 
 SELECT 
     v.record_id AS record_id,
     a.location_id AS location_id,
@@ -1189,12 +1159,12 @@ WHERE
     (a.true_water_source_score = w.subjective_quality_score
         OR v.visit_count = 1)
         AND a.true_water_source_score <> w.subjective_quality_score;
+```
 
 
-So now we can link the incorrect records to the employees who recorded them. The ID's don't help us to identify them. We have employees' names
-stored along with their IDs, so let's fetch their names from the employees table instead of the ID's
+#### So now we can link the incorrect records to the employees who recorded them. The ID's don't help us to identify them. We have employees' names stored along with their IDs, so let's fetch their names from the employees table instead of the ID's
 
-
+```sql
 SELECT 
     v.record_id AS record_id,
     a.location_id AS location_id,
@@ -1214,15 +1184,13 @@ WHERE
     (a.true_water_source_score = w.subjective_quality_score
         OR v.visit_count = 1)
         AND a.true_water_source_score <> w.subjective_quality_score;
+```
 
 
 
-Well this query is massive and complex, so maybe it is a good idea to save this as a CTE, so when we do more analysis, we can just call that CTE
-like it was a table. Call it something like Incorrect_records. Once you are done, check if this query SELECT * FROM Incorrect_records, gets
-the same table back.
-Now that we defined Incorrect_records, we can query it like any other table.
+#### Well this query is massive and complex, so maybe it is a good idea to save this as a CTE, so when we do more analysis, we can just call that CTE like it was a table. Call it something like Incorrect_records. Once you are done, check if this query SELECT * FROM Incorrect_records, gets the same table back. Now that we defined Incorrect_records, we can query it like any other table.
 
-
+```sql
 WITH
  Incorrect_records AS (
 SELECT
@@ -1245,13 +1213,14 @@ JOIN employee AS em
 SELECT *
 	
 FROM 
-	Incorrect_records
+	Incorrect_records;
+```
 
 
 
-Let's first get a unique list of employees from this table. Think back to the start of your SQL journey to answer this one. I got 17 employees.
+#### Let's first get a unique list of employees from this table. Think back to the start of your SQL journey to answer this one. I got 17 employees.
 
-
+```sql
 WITH
  Incorrect_records AS (
 SELECT
@@ -1275,13 +1244,13 @@ SELECT
 	DISTINCT employee_name
 FROM 
 	Incorrect_records;
+```
 
 
 
-Next, let's try to calculate how many mistakes each employee made. So basically we want to count how many times their name is in
-Incorrect_records list, and then group them by name, right?
+#### Next, let's try to calculate how many mistakes each employee made. So basically we want to count how many times their name is in Incorrect_records list, and then group them by name, right?
 
-
+```sql
 WITH
  Incorrect_records AS (
 SELECT
@@ -1308,32 +1277,28 @@ FROM
 	Incorrect_records
 GROUP BY employee_name
 ORDER BY number_of_mistakes DESC;
+```
 
 
-It looks like some of our surveyors are making a lot of "mistakes" while many of the other surveyors are only making a few. I don't like where this is
-going
+#### It looks like some of our surveyors are making a lot of "mistakes" while many of the other surveyors are only making a few. we don't like where this is going
 
 ## Gathering some evidence
 Ok, so thinking about this a bit. How would we go about finding out if any of our employees are corrupt?
 
-Let's say all employees make mistakes, if someone is corrupt, they will be making a lot of "mistakes", more than average, for example. But someone
-could just be clumsy, so we should try to get more evidence...
+#### Let's say all employees make mistakes, if someone is corrupt, they will be making a lot of "mistakes", more than average, for example. But someone could just be clumsy, so we should try to get more evidence... Our auditor did say some of the things he heard on the streets were quite shady, and he recorded this in the statements column. Considering both of these sources should give us a pretty reliable answer. So let's try to find all of the employees who have an above-average number of mistakes. Let's break it down into steps first:
+#### 1. We have to first calculate the number of times someone's name comes up. (we just did that in the previous query). Let's call it error_count.
+#### 2. Then, we need to calculate the average number of mistakes employees made. We can do that by taking the average of the previous query's results. Something like this : 
 
-Our auditor did say some of the things he heard on the streets were quite shady, and he recorded this in the statements column. Considering
-both of these sources should give us a pretty reliable answer.
-
-
-So let's try to find all of the employees who have an above-average number of mistakes. Let's break it down into steps first:
-1. We have to first calculate the number of times someone's name comes up. (we just did that in the previous query). Let's call it error_count.
-2. Then, we need to calculate the average number of mistakes employees made. We can do that by taking the average of the previous query's
-results. Something like this : 
+```sql
 SELECT
 AVG(number_of_mistakes)
 FROM
 error_count;
-Let's call that result avg_error_count_per_empl, which would be a scalar value.
+```
 
+#### Let's call that result avg_error_count_per_empl, which would be a scalar value.
 
+```sql
 WITH Incorrect_records AS (
 SELECT
 a.location_id AS location_id,
@@ -1366,12 +1331,13 @@ GROUP BY employee_name
 SELECT
 AVG(number_of_mistakes) AS avg_error_count_per_empl
 FROM ErrorCount;
+```
 
 
 
-3. Finaly we have to compare each employee's error_count with avg_error_count_per_empl. We will call this results set our suspect_list.
-Remember that we can't use an aggregate result in WHERE, so we have to use avg_error_count_per_empl as a subquery.
+#### 3. Finaly we have to compare each employee's error_count with avg_error_count_per_empl. We will call this results set our suspect_list. Remember that we can't use an aggregate result in WHERE, so we have to use avg_error_count_per_empl as a subquery.
 
+```sql
 SELECT
 employee_name,
 number_of_mistakes
@@ -1379,11 +1345,13 @@ FROM
 error_count
 WHERE
 number_of_mistakes > (avg_error_count_per_empl);
+```
 
 
 
-QUERY suspect list
+## QUERY suspect list
 
+```sql
 WITH Incorrect_records AS (
 SELECT
 a.location_id AS location_id,
@@ -1426,19 +1394,13 @@ SELECT
 employee_name,
 number_of_mistakes
 FROM SuspectList;
+```
 
+#### 1. Let's start by cleaning up our code a bit. First, Incorrect_records is a result we'll be using for the rest of the analysis, but it makes the query a bit less readable. So, let's convert it to a VIEW. We can then use it as if it was a table. It will make our code much simpler to read, but, it comes at a cost. We can add comments to CTEs in our code, so if we return to that query a year later, we can read those comments and quickly understand what Incorrect_records represents. If we save it as a VIEW, it is not as obvious. So we should add comments in places where we use Incorrect_records.
 
+#### So, replace WITH with CREATE VIEW like this, and note that I added the statements column to this table in line 8 too:
 
-
-1. Let's start by cleaning up our code a bit. First, Incorrect_records is a result we'll be using for the rest of the analysis, but it makes the
-query a bit less readable. So, let's convert it to a VIEW. We can then use it as if it was a table. It will make our code much simpler to read, but, it
-comes at a cost. We can add comments to CTEs in our code, so if we return to that query a year later, we can read those comments and quickly
-understand what Incorrect_records represents. If we save it as a VIEW, it is not as obvious. So we should add comments in places where we
-use Incorrect_records.
-
-So, replace WITH with CREATE VIEW like this, and note that I added the statements column to this table in line 8 too:
-
-
+```sql
 CREATE VIEW
  Incorrect_records AS (
 SELECT
@@ -1459,26 +1421,23 @@ JOIN employee AS em
 	ON em.assigned_employee_id = v.assigned_employee_id
   WHERE wq.subjective_quality_score !=  ar.true_water_source_score
   AND  v.visit_count = 1);
+```
  
 
-Now, calling SELECT * FROM Incorrect_records gives us the same result as the CTE did.
+#### Now, calling SELECT * FROM Incorrect_records gives us the same result as the CTE did.
 
-
+```sql
 SELECT * FROM Incorrect_records;
+```
 
+#### Next, we convert the query error_count, we made earlier, into a CTE. Test it to make sure it gives the same result again, using SELECT * FROM Incorrect_records. On large queries like this, it is better to build the query, and test each step, because fixing errors becomes harder as the query grows.
 
+#### 2. Now calculate the average of the number_of_mistakes in error_count. You should get a single value.
 
-Next, we convert the query error_count, we made earlier, into a CTE. Test it to make sure it gives the same result again, using SELECT * FROM
-Incorrect_records. On large queries like this, it is better to build the query, and test each step, because fixing errors becomes harder as the
-query grows.
+#### 3. To find the employees who made more mistakes than the average person, we need the employee's names, the number of mistakes each one made, and filter the employees with an above-average number of mistakes.
+#### HINT: Use SELECT AVG(mistake_count) FROM error_count as a custom filter in the WHERE part of our query.
 
-2. Now calculate the average of the number_of_mistakes in error_count. You should get a single value.
-
-3. To find the employees who made more mistakes than the average person, we need the employee's names, the number of mistakes each one
-made, and filter the employees with an above-average number of mistakes.
-HINT: Use SELECT AVG(mistake_count) FROM error_count as a custom filter in the WHERE part of our query.
-
-
+```sql
 WITH
  error_count AS (
 SELECT 
@@ -1493,29 +1452,22 @@ SELECT
 	FROM error_count
 	WHERE 
 		number_of_mistakes > (SELECT AVG(number_of_mistakes) FROM error_count);
+```
+#### These are the employees who made more mistakes, on average, than their peers, so let's have a closer look at them. We should look at the Incorrect_records table again, and isolate all of the records these four employees gathered. We should also look at the statements for these records to look for patterns. First, convert the suspect_list to a CTE, so we can use it to filter the records from these four employees. Make sure you get the names of the four "suspects", and their mistake count as a result, using SELECT employee_name FROM suspect_list.
 
+#### You should get a column of names back. So let's just recap here...
+#### 1. We use Incorrect_records to find all of the records where the auditor and employee scores don't match.
+#### 2. We then used error_count to aggregate the data, and got the number of mistakes each employee made.
+#### 3. Finally, suspect_list retrieves the data of employees who make an above-average number of mistakes.
+#### Now we can filter that Incorrect_records CTE to identify all of the records associated with the four employees we identified.
 
-These are the employees who made more mistakes, on average, than their peers, so let's have a closer look at them.
-
-We should look at the Incorrect_records table again, and isolate all of the records these four employees gathered. We should also look at the
-statements for these records to look for patterns.
-
-First, convert the suspect_list to a CTE, so we can use it to filter the records from these four employees. Make sure you get the names of the
-four "suspects", and their mistake count as a result, using SELECT employee_name FROM suspect_list.
-
-You should get a column of names back. So let's just recap here...
-1. We use Incorrect_records to find all of the records where the auditor and employee scores don't match.
-2. We then used error_count to aggregate the data, and got the number of mistakes each employee made.
-3. Finally, suspect_list retrieves the data of employees who make an above-average number of mistakes.
-Now we can filter that Incorrect_records CTE to identify all of the records associated with the four employees we identified.
-
-Firstly, let's add the statements column to the Incorrect_records CTE. Then pull up all of the records where the employee_name is in the
-suspect list. HINT: Use SELECT employee_name FROM suspect_list as a subquery in WHERE.
+####  Firstly, let's add the statements column to the Incorrect_records CTE. Then pull up all of the records where the employee_name is in the suspect list. HINT: Use SELECT employee_name FROM suspect_list as a subquery in WHERE.
 
 
 
-QUERY suspect list
+### QUERY suspect list
 
+```sql
 WITH Incorrect_records AS (
 SELECT
 a.location_id AS location_id,
@@ -1558,13 +1510,12 @@ SELECT
 employee_name,
 number_of_mistakes
 FROM SuspectList;
+```
 
 
 
-QUERY to add the statements column to the Incorrect_records CTE. Then
-pull up all of the records where the employee_name is in the suspect list
-
-
+### QUERY to add the statements column to the Incorrect_records CTE. Then pull up all of the records where the employee_name is in the suspect list
+```sql
 WITH Incorrect_records AS (
 SELECT
 a.location_id AS location_id,
@@ -1612,25 +1563,19 @@ FROM
 Incorrect_records AS i
 WHERE
 i.employee_name IN (SELECT employee_name FROM SuspectList);
+```
+
+#### If you have a look, you will notice some alarming statements about these four officials (look at these records: AkRu04508, AkRu07310, KiRu29639, AmAm09607, for example. See how the word "cash" is used a lot in these statements.
+
+#### Filter the records that refer to "cash". Let's just do one more check to make sure... 
+#### Check if there are any employees in the Incorrect_records table with statements mentioning "cash" that are not in our suspect list. This should be as simple as adding one word.
+#### I get an empty result, so no one, except the four suspects, has these allegations of bribery.
 
 
 
-If you have a look, you will notice some alarming statements about these four officials (look at these records: AkRu04508, AkRu07310,
-KiRu29639, AmAm09607, for example. See how the word "cash" is used a lot in these statements.
+### QUERY to filter the word cash
 
-Filter the records that refer to "cash".
-
-Let's just do one more check to make sure...
-
-Check if there are any employees in the Incorrect_records table with statements mentioning "cash" that are not in our suspect list. This should
-be as simple as adding one word.
-
-I get an empty result, so no one, except the four suspects, has these allegations of bribery.
-
-
-
-QUERY to filter the word cash
-
+```sql
 WITH Incorrect_records AS (
 SELECT
 a.location_id AS location_id,
@@ -1679,16 +1624,11 @@ FROM
 Incorrect_records AS i
 WHERE
 i.employee_name IN (SELECT employee_name FROM SuspectList);
+```
 
+#### OR 
 
-
-
-
-
-OR 
-
-
-
+```sql
 WITH Incorrect_records AS (
 SELECT
 a.location_id AS location_id,
@@ -1737,13 +1677,16 @@ Incorrect_records AS i
 WHERE
 i.employee_name IN (SELECT employee_name FROM SuspectList)
 AND i.location_id IN ('AkRu04508', 'AkRu07310', 'KiRu29639', 'AmAm09607')
-AND i.statements LIKE '%CASH%'
+AND i.statements LIKE '%CASH%';
+```
 
 
 
 
-FINAL QUERY 
 
+
+## FINAL QUERY 
+```sql
 WITH Incorrect_records AS (
 SELECT
 a.location_id AS audit_location,
@@ -1805,15 +1748,11 @@ incorrect_records
 WHERE
 employee_name NOT IN (SELECT employee_name FROM suspect_list)
 AND statements LIKE '%CASH%';
+```
 
-
-
-So we can sum up the evidence we have for Zuriel Matembo, Malachi Mavuso, Bello Azibo and Lalitha Kaburi:
-1. They all made more mistakes than their peers on average.
-2. They all have incriminating statements made against them, and only them.
-Keep in mind, that this is not decisive proof, but it is concerning enough that we should flag it. Pres. Naledi has worked hard to stamp out
-corruption, so she would urge us to report this.
-I am a bit shocked to be honest! After all our teams set out to do, it is hard for me to uncover this. I'll let Pres. Naledi know what we found out
+#### So we can sum up the evidence we have for Zuriel Matembo, Malachi Mavuso, Bello Azibo and Lalitha Kaburi:
+#### 1. They all made more mistakes than their peers on average.
+#### 2. They all have incriminating statements made against them, and only them. Keep in mind, that this is not decisive proof, but it is concerning enough that we should flag it. Pres. Naledi has worked hard to stamp out corruption, so she would urge us to report this. I am a bit shocked to be honest! After all our teams set out to do, it is hard for me to uncover this. I'll let Pres. Naledi know what we found out
 
 
 
